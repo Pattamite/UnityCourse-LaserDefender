@@ -7,6 +7,7 @@ public class EnemySpawner : MonoBehaviour
 	public float width = 10f;
 	public float height = 5f;
 	public float speed = 5f;
+	public float spawnDelay = 0.5f;
 	
 	private bool movingRight = true;
 	private float xmax;
@@ -19,16 +20,7 @@ public class EnemySpawner : MonoBehaviour
 		Vector3 rightBoundary = Camera.main.ViewportToWorldPoint(new Vector3(1,0,distanceToCamera));	
 		xmax = rightBoundary.x;
 		xmin = leftBoundary.x;
-		foreach(Transform child in transform)
-		{
-			GameObject enemy = Instantiate(enemyPrefab, child.transform.position, Quaternion.identity) as GameObject;
-			enemy.transform.parent = child;
-		}
-	}
-	
-	public void OnDrawGizmos()
-	{
-		Gizmos.DrawWireCube(transform.position, new Vector3 (width,height,0));
+		SpawnEnemies();
 	}
 	
 	// Update is called once per frame
@@ -47,5 +39,54 @@ public class EnemySpawner : MonoBehaviour
 		float leftEdgeOfFormation = transform.position.x - 0.5f*width;
 		if(leftEdgeOfFormation <= xmin) movingRight = true;
 		else if(rightEdgeOfFormation >= xmax) movingRight = false;
+		
+		if(AllMemberDead())
+		{
+			Debug.Log("All enemies are down!");
+			SpawnUntilFull();
+		}
+	}
+	
+	public void OnDrawGizmos()
+	{
+		Gizmos.DrawWireCube(transform.position, new Vector3 (width,height,0));
+	}
+	
+	void SpawnEnemies()
+	{
+		foreach(Transform child in transform)
+		{
+			GameObject enemy = Instantiate(enemyPrefab, child.transform.position, Quaternion.identity) as GameObject;
+			enemy.transform.parent = child;
+		}
+	}
+	
+	Transform NextFreePosition()
+	{
+		foreach(Transform childPosition in transform)
+		{
+			if(childPosition.childCount==0) return childPosition;
+		}
+		return null;
+	}
+	
+	void SpawnUntilFull()
+	{
+		Transform FreePosition = NextFreePosition();
+		if(FreePosition)
+		{
+			GameObject enemy = Instantiate(enemyPrefab, FreePosition.transform.position, Quaternion.identity) as GameObject;
+			enemy.transform.parent = FreePosition;
+		}
+		if(NextFreePosition()) Invoke("SpawnUntilFull", spawnDelay);
+	}
+	
+	bool AllMemberDead()
+	{
+		foreach(Transform childPosition in transform)
+		{
+			if(childPosition.childCount>0) return false;
+		}
+		return true;
 	}
 }

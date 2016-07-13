@@ -8,6 +8,8 @@ public class PlayerController : MonoBehaviour
 	public GameObject projectile;
 	public float projectileSpeed = 5.0f;
 	public float fireRate = 0.2f;
+	public float health = 100f;
+	public AudioClip playerFire;
 	
 	private float xmin;
 	private float xmax;	
@@ -47,5 +49,27 @@ public class PlayerController : MonoBehaviour
 	{
 		GameObject beam = Instantiate(projectile, transform.position, Quaternion.identity) as GameObject;
 		beam.rigidbody2D.velocity  = new Vector3 (0, projectileSpeed);
+		AudioSource.PlayClipAtPoint(playerFire , transform.position);
+	}
+	
+	void OnTriggerEnter2D(Collider2D collider)
+	{
+		Projectile missile =  collider.gameObject.GetComponent<Projectile>();
+		if(missile)
+		{
+			//Debug.Log ("Hit by a projectile");
+			health -= missile.GetDamage();
+			missile.Hit();
+			if(health <=0)
+			{
+				Die();
+			}
+		}
+	}
+	
+	void Die()
+	{
+		LevelManager levelmanager = GameObject.Find ("LevelManager").GetComponent<LevelManager>();
+		levelmanager.LoadLevel("Game Over");
 	}
 }
